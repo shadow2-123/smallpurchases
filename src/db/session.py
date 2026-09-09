@@ -18,7 +18,7 @@ class Database:
         self._session_factory = sessionmaker(bind=self.engine)
         Base.metadata.create_all(self.engine)
 
-    def add_new_notice(self, notice: NoticeSchema, spec: str) -> bool:
+    def add_new_notice(self, notice: NoticeSchema, spec: str, docs: str) -> bool:
         with self._session_factory() as session:
             if session.get(Notice, notice.link) is not None:
                 return False
@@ -35,6 +35,7 @@ class Database:
                     customer_name=notice.customer_name,
                     okpd_code=notice.okpd_code,
                     spec=spec,
+                    docs=docs,
                     sent=False,
                 )
             )

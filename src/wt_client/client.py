@@ -5,7 +5,8 @@ from typing import List
 import requests
 import re
 from wt_client.schemas import NoticeSchema
-from wt_client.notice_page import parse_spec
+from wt_client.notice_page import parse_spec, parse_docs
+
 
 class WTClient:
     BASE = "https://wt.udmr.ru/smallpurchases"
@@ -111,15 +112,14 @@ class WTClient:
             },
         )
 
-    def parse_notice(self, notice: NoticeSchema) -> list[tuple[str, str, str, str]]:
+    def parse_notice(self, notice: NoticeSchema) -> tuple[list, list]:
         resp = self._request_notice(notice.link)
-
         if resp.status_code in (400, 401, 403):
             self._auth()
             resp = self._request_notice(notice.link)
-
         resp.raise_for_status()
-        return parse_spec(resp.text)
+        html = resp.text
+        return parse_spec(html), parse_docs(html)
 
     def _request_notice(self, link: str) -> requests.Response:
         return self.session.get(

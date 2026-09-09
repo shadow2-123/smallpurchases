@@ -6,6 +6,9 @@ from db.models import Notice
 def spec_text(rows: list[tuple[str, str, str, str]]) -> str:
     return "\n".join(f"{name}||{units}||{qty}||{price}" for name, units, qty, price in rows)
 
+def docs_text(rows: list[tuple[str, str]]) -> str:
+    return "\n".join(f"{name}||{url}" for name, url in rows)
+
 def format_spec_html(spec: str) -> str:
     rows_html = []
     for line in spec.splitlines():
@@ -55,3 +58,4 @@ def format_notice_html(notice: Notice) -> tuple[str, str]:
         f"<br>Спецификация<br>{format_spec_html(notice.spec)}"
     )
     return subject, body
+

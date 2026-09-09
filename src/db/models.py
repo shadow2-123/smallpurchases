@@ -22,4 +22,5 @@ class Notice(Base):
     customer_name: Mapped[str] = mapped_column(Text)
     okpd_code: Mapped[str] = mapped_column(String(255))
     spec: Mapped[str] = mapped_column(Text)
+    docs: Mapped[str] = mapped_column(Text)
     sent: Mapped[bool] = mapped_column(Boolean)
