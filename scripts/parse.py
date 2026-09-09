@@ -49,9 +49,8 @@ def main() -> None:
         log.info("Старт прохода")
         page = 0
         total_new = 0
-
+        exclude = load_exclude(ROOT / "exclude.txt")
         while True:
-            exclude = load_exclude(ROOT / "exclude.txt")
             notices = client.fetch_notices(page=str(page), per_page=settings["notices_per_page"], pub_days_back=settings["pub_days_back"])
             log.info("Страница %s, на ней заявок %s", page, len(notices))
 
@@ -65,8 +64,8 @@ def main() -> None:
 
                 if db.exists(notice.link):
                     continue
-                spec = client.parse_notice(notice)
-                db.add_new_notice(notice, spec_text(spec[0]), docs_text(spec[1]))
+                spec_rows, doc_rows = client.parse_notice(notice)
+                db.add_new_notice(notice, spec_text(spec_rows), docs_text(doc_rows))
                 total_new += 1
                 log.info("новая %s %s", notice.number, notice.name)
 

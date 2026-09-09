@@ -1,8 +1,6 @@
 {
   "db_path": "data.db",
-  "okpd_prefixes": ["26", "27"],
   "parse_interval_sec": 2700,
-  "notify_interval_sec": 1800,
   "notices_per_page": 30,
   "pub_days_back": 5
 }
