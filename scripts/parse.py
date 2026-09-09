@@ -66,7 +66,7 @@ def main() -> None:
                 if db.exists(notice.link):
                     continue
                 spec = client.parse_notice(notice)
-                db.add_new_notice(notice, spec_text(spec[0], docs_text(spec[1])))
+                db.add_new_notice(notice, spec_text(spec[0]), docs_text(spec[1]))
                 total_new += 1
                 log.info("новая %s %s", notice.number, notice.name)
 
