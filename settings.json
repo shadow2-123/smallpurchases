@@ -2,5 +2,6 @@
   "db_path": "data.db",
   "parse_interval_sec": 2700,
   "notices_per_page": 30,
-  "pub_days_back": 5
+  "pub_days_back": 5,
+  "big_notice_sum": 70000
 }

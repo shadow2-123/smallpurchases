@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+from decimal import Decimal
 from pathlib import Path
 from typing import List
 
@@ -62,3 +64,35 @@ class Database:
         with self._session_factory() as session:
             notice = session.get(Notice, link)
             return notice is not None
+
+    @staticmethod
+    def _day_start(days: int = 0) -> datetime:
+        now = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        return now + timedelta(days=days)
+
+    def get_unsent_today_tomorrow(self) -> list[Notice]:
+        start = self._day_start(0)
+        end = self._day_start(2)
+        with self._session_factory() as session:
+            return list(
+                session.scalars(
+                    select(Notice).where(
+                        Notice.sent.is_(False),
+                        Notice.end_date >= start,
+                        Notice.end_date < end,
+                    )
+                ).all()
+            )
+
+    def get_unsent_big(self, min_amount: Decimal) -> list[Notice]:
+        start = self._day_start(1)
+        with self._session_factory() as session:
+            return list(
+                session.scalars(
+                    select(Notice).where(
+                        Notice.sent.is_(False),
+                        Notice.end_date >= start,
+                        Notice.amount >= min_amount,
+                    )
+                ).all()
+            )

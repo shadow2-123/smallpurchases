@@ -26,7 +26,7 @@ log = logging.getLogger(__name__)
 
 
 def send_unsent(db: Database, mail: MailClient, to: str) -> None:
-    notices = db.get_all_unsent()
+    notices = db.get_unsent_today_tomorrow()
     log.info("к отправке: %s", len(notices))
 
     for notice in notices:

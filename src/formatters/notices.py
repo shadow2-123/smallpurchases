@@ -1,7 +1,6 @@
 from html import escape
-
 from db.models import Notice
-
+SEP = " | "
 
 def spec_text(rows: list[tuple[str, str, str, str]]) -> str:
     return "\n".join(f"{name}||{units}||{qty}||{price}" for name, units, qty, price in rows)
@@ -34,28 +33,63 @@ def format_spec_html(spec: str) -> str:
 
 
 def format_notice_plain(notice: Notice) -> tuple[str, str]:
-    subject = f"Новая закупка {notice.number}"
+    subject = format_subject(notice)
     body = (
-        f"{notice.name}\n\n"
-        f"Номер: {notice.number}\n\n"
-        f"Цена: {notice.amount}\n\n"
-        f"Заказчик: {notice.customer_name}\n\n"
-        f"Подача: {notice.start_date} — {notice.end_date}\n\n"
         f"https://wt.udmr.ru/smallpurchases/GzwSP/Notice?noticeLink={notice.link}\n\n"
         f"\nСпецификация\n{notice.spec}"
+        f"{format_docs_plain(notice.docs)}"
     )
     return subject, body
 
 def format_notice_html(notice: Notice) -> tuple[str, str]:
-    subject = f"Новая закупка {notice.number}"
+    subject = format_subject(notice)
     body = (
-        f"{escape(notice.name)}<br><br>"
-        f"Номер: {escape(notice.number)}<br><br>"
-        f"Цена: {notice.amount}<br><br>"
-        f"Заказчик: {escape(notice.customer_name)}<br><br>"
-        f"Подача: {notice.start_date} — {notice.end_date}<br><br>"
         f"https://wt.udmr.ru/smallpurchases/GzwSP/Notice?noticeLink={escape(notice.link)}<br><br>"
         f"<br>Спецификация<br>{format_spec_html(notice.spec)}"
+        f"{format_docs_html(notice.docs)}"
     )
     return subject, body
 
+def short_name(name: str, limit: int = 15) -> str:
+    name = " ".join(name.split())
+    if len(name) <= limit:
+        return name
+    idx = name.find(" ", limit)
+    if idx == -1:
+        return name
+    return name[:idx]
+
+def format_subject(notice: Notice) -> str:
+    day = notice.end_date.strftime("%d/%m")
+    return SEP.join([
+        day,
+        notice.number,
+        short_name(notice.name),
+        notice.customer_name,
+    ])
+
+def format_docs_html(docs: str) -> str:
+    if not docs.strip():
+        return ""
+    items = []
+    for line in docs.splitlines():
+        if not line.strip() or "||" not in line:
+            continue
+        name, url = line.split("||", 1)
+        name = escape(name.strip())
+        url = escape(url.strip())
+        items.append(f'<li><a href="{url}">{name}</a></li>')
+    if not items:
+        return ""
+    return "<br><ul>" + "".join(items) + "</ul>"
+
+def format_docs_plain(docs: str) -> str:
+    if not docs.strip():
+        return ""
+    lines = [""]
+    for line in docs.splitlines():
+        if not line.strip() or "||" not in line:
+            continue
+        name, url = line.split("||", 1)
+        lines.append(f"{name.strip()}: {url.strip()}")
+    return "\n".join(lines)
