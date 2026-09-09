@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import time
@@ -22,31 +23,27 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 
-
-OKPD_CODES = ("26",
-              "27")
-
-
-
-def is_electro(codes: str) -> bool:
+def is_electro(codes: str, okpd_codes: tuple[str]) -> bool:
     return any(
-        code.strip().startswith(OKPD_CODES)
+        code.strip().startswith(okpd_codes)
         for code in codes.split(",")
         if code.strip()
     )
 
 
 def main() -> None:
+    with open(ROOT / "settings.json", encoding="utf-8") as f:
+        settings = json.load(f)
     load_dotenv()
     client = WTClient(os.getenv("LOGIN"), os.getenv("PASSWORD"))
-    db = Database(str(ROOT / "data.db"))
+    db = Database(str(ROOT / settings["db_path"]))
     while True:
         log.info("Старт прохода")
         page = 0
         total_new = 0
 
         while True:
-            notices = client.fetch_notices(page=str(page), per_page=30)
+            notices = client.fetch_notices(page=str(page), per_page=settings["notices_per_page"])
             log.info("Страница %s, на ней заявок %s", page, len(notices))
 
             if not notices:
@@ -54,7 +51,7 @@ def main() -> None:
 
             for notice in notices:
 
-                if not is_electro(notice.okpd_code):
+                if not is_electro(notice.okpd_code, settings["okpd_prefixes"]):
                     continue
 
                 if db.exists(notice.link):
@@ -67,7 +64,9 @@ def main() -> None:
             page += 1
 
         log.info("Готово, новых: %s", total_new)
-        time.sleep(2700)
+        time.sleep(settings["parse_interval_sec"])
+        with open(ROOT / "settings.json", encoding="utf-8") as f:
+            settings = json.load(f)
 
 
 if __name__ == "__main__":

@@ -3,6 +3,7 @@ import os
 import smtplib
 import time
 from pathlib import Path
+import json
 
 from dotenv import load_dotenv
 
@@ -41,8 +42,10 @@ def send_unsent(db: Database, mail: MailClient, to: str) -> None:
 
 
 def main() -> None:
+    with open(ROOT / "settings.json", encoding="utf-8") as f:
+        settings = json.load(f)
     load_dotenv()
-    db = Database(str(ROOT / "data.db"))
+    db = Database(str(ROOT / settings["db_path"]))
     mail = MailClient(
         host=os.getenv("SMTP_HOST"),
         port=int(os.getenv("SMTP_PORT", "465")),
@@ -57,7 +60,9 @@ def main() -> None:
             send_unsent(db, mail, to)
         except Exception:
             log.exception("проход рассылки упал")
-        time.sleep(INTERVAL)
+        time.sleep(settings["notify_interval_sec"])
+        with open(ROOT / "settings.json", encoding="utf-8") as f:
+            settings = json.load(f)
 
 
 if __name__ == "__main__":
