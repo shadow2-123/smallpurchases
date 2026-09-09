@@ -36,7 +36,7 @@ def format_notice_plain(notice: Notice) -> tuple[str, str]:
     subject = format_subject(notice)
     body = (
         f"https://wt.udmr.ru/smallpurchases/GzwSP/Notice?noticeLink={notice.link}\n\n"
-        f"\nСпецификация\n{notice.spec}"
+        f"\nСпецификация\n\n{notice.spec}"
         f"{format_docs_plain(notice.docs)}"
     )
     return subject, body
@@ -45,7 +45,7 @@ def format_notice_html(notice: Notice) -> tuple[str, str]:
     subject = format_subject(notice)
     body = (
         f"https://wt.udmr.ru/smallpurchases/GzwSP/Notice?noticeLink={escape(notice.link)}<br><br>"
-        f"<br>Спецификация<br>{format_spec_html(notice.spec)}"
+        f"<br><br>{format_spec_html(notice.spec)}"
         f"{format_docs_html(notice.docs)}"
     )
     return subject, body

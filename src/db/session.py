@@ -80,7 +80,7 @@ class Database:
                         Notice.sent.is_(False),
                         Notice.end_date >= start,
                         Notice.end_date < end,
-                    )
+                    ).order_by(Notice.end_date.asc())
                 ).all()
             )
 
@@ -93,6 +93,6 @@ class Database:
                         Notice.sent.is_(False),
                         Notice.end_date >= start,
                         Notice.amount >= min_amount,
-                    )
+                    ).order_by(Notice.end_date.asc())
                 ).all()
             )

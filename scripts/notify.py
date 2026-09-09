@@ -1,18 +1,19 @@
+import argparse
+import json
 import logging
 import os
 import smtplib
-import time
+from decimal import Decimal
 from pathlib import Path
-import json
 
 from dotenv import load_dotenv
 
 from db.session import Database
+from db.models import Notice
 from formatters.notices import format_notice_html, format_notice_plain
 from mail.client import MailClient
 
 ROOT = Path(__file__).resolve().parents[1]
-INTERVAL = 30 * 60
 
 logging.basicConfig(
     level=logging.INFO,
@@ -25,10 +26,14 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 
-def send_unsent(db: Database, mail: MailClient, to: str) -> None:
-    notices = db.get_unsent_today_tomorrow()
-    log.info("к отправке: %s", len(notices))
+def parse_args() -> str:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("mode", choices=["morning", "afternoon", "big"])
+    return parser.parse_args().mode
 
+
+def send_list(db: Database, mail: MailClient, to: str, notices: list[Notice]) -> None:
+    log.info("к отправке: %s", len(notices))
     for notice in notices:
         subject, body_html = format_notice_html(notice)
         _, body_plain = format_notice_plain(notice)
@@ -42,9 +47,10 @@ def send_unsent(db: Database, mail: MailClient, to: str) -> None:
 
 
 def main() -> None:
-    with open(ROOT / "settings.json", encoding="utf-8") as f:
-        settings = json.load(f)
+    mode = parse_args()
+    settings = json.loads((ROOT / "settings.json").read_text(encoding="utf-8"))
     load_dotenv()
+
     db = Database(str(ROOT / settings["db_path"]))
     mail = MailClient(
         host=os.getenv("SMTP_HOST"),
@@ -55,15 +61,18 @@ def main() -> None:
     )
     to = os.getenv("MAIL_TO")
 
-    while True:
-        try:
-            send_unsent(db, mail, to)
-        except Exception:
-            log.exception("проход рассылки упал")
-        time.sleep(settings["notify_interval_sec"])
-        with open(ROOT / "settings.json", encoding="utf-8") as f:
-            settings = json.load(f)
+    if mode == "big":
+        notices = db.get_unsent_big(Decimal(str(settings["big_notice_sum"])))
+    else:
+        notices = db.get_unsent_today_tomorrow()
+
+    log.info("режим %s", mode)
+    send_list(db, mail, to, notices)
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception:
+        log.exception("рассылка упала")
+        raise
