@@ -57,19 +57,19 @@ class WTClient:
         self.csrf_token = self._extract_token(page.text)
 
 
-    def fetch_notices(self, page: str = "0", per_page: int = 30) -> List[NoticeSchema]:
-        resp = self._request_notices(page=page, per_page=per_page)
+    def fetch_notices(self, page: str = "0", per_page: int = 30, pub_days_back: int = 5) -> List[NoticeSchema]:
+        resp = self._request_notices(page=page, per_page=per_page, pub_days_back=pub_days_back)
 
         if resp.status_code in (400, 401, 403):
             self._auth()
-            resp = self._request_notices(page=page, per_page=per_page)
+            resp = self._request_notices(page=page, per_page=per_page, pub_days_back=pub_days_back)
 
         resp.raise_for_status()
         return [NoticeSchema.model_validate(item) for item in resp.json()["items"]]
 
 
-    def _request_notices(self, page: str, per_page: int) -> requests.Response:
-        filter_day = (datetime.now() - timedelta(days=5)).strftime("%d.%m.%Y")
+    def _request_notices(self, page: str, per_page: int, pub_days_back: int) -> requests.Response:
+        filter_day = (datetime.now() - timedelta(days=pub_days_back)).strftime("%d.%m.%Y")
 
         payload = {
             "settings": {

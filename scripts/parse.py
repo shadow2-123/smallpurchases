@@ -43,7 +43,7 @@ def main() -> None:
         total_new = 0
 
         while True:
-            notices = client.fetch_notices(page=str(page), per_page=settings["notices_per_page"])
+            notices = client.fetch_notices(page=str(page), per_page=settings["notices_per_page"], pub_days_back=settings["pub_days_back"])
             log.info("Страница %s, на ней заявок %s", page, len(notices))
 
             if not notices:
