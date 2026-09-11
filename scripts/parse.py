@@ -40,41 +40,39 @@ def is_excluded(name: str, words: list[str]) -> bool:
 
 
 def main() -> None:
-    with open(ROOT / "settings.json", encoding="utf-8") as f:
-        settings = json.load(f)
+    settings = json.loads((ROOT / "settings.json").read_text(encoding="utf-8"))
     load_dotenv()
     client = WTClient(os.getenv("LOGIN"), os.getenv("PASSWORD"))
     db = Database(str(ROOT / settings["db_path"]))
+    exclude = load_exclude(ROOT / "exclude.txt")
+
+    log.info("Старт прохода")
+    page = 0
+    total_new = 0
+
     while True:
-        log.info("Старт прохода")
-        page = 0
-        total_new = 0
-        exclude = load_exclude(ROOT / "exclude.txt")
-        while True:
-            notices = client.fetch_notices(page=str(page), per_page=settings["notices_per_page"], pub_days_back=settings["pub_days_back"])
-            log.info("Страница %s, на ней заявок %s", page, len(notices))
+        notices = client.fetch_notices(
+            page=str(page),
+            per_page=settings["notices_per_page"],
+            pub_days_back=settings["pub_days_back"],
+        )
+        log.info("Страница %s, на ней заявок %s", page, len(notices))
+        if not notices:
+            break
 
-            if not notices:
-                break
+        for notice in notices:
+            if is_excluded(notice.name, exclude):
+                continue
+            if db.exists(notice.link):
+                continue
+            spec_rows, doc_rows = client.parse_notice(notice)
+            db.add_new_notice(notice, spec_text(spec_rows), docs_text(doc_rows))
+            total_new += 1
+            log.info("новая %s %s", notice.number, notice.name)
 
-            for notice in notices:
+        page += 1
 
-                if is_excluded(notice.name, exclude):
-                    continue
-
-                if db.exists(notice.link):
-                    continue
-                spec_rows, doc_rows = client.parse_notice(notice)
-                db.add_new_notice(notice, spec_text(spec_rows), docs_text(doc_rows))
-                total_new += 1
-                log.info("новая %s %s", notice.number, notice.name)
-
-            page += 1
-
-        log.info("Готово, новых: %s", total_new)
-        time.sleep(settings["parse_interval_sec"])
-        with open(ROOT / "settings.json", encoding="utf-8") as f:
-            settings = json.load(f)
+    log.info("Готово, новых: %s", total_new)
 
 
 if __name__ == "__main__":

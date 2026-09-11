@@ -1,9 +1,9 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from decimal import Decimal
 from pathlib import Path
 from typing import List
 
-from sqlalchemy import create_engine, select
+from sqlalchemy import create_engine, select, func
 from sqlalchemy.orm import sessionmaker
 
 from db.models import Base, Notice
@@ -71,15 +71,14 @@ class Database:
         return now + timedelta(days=days)
 
     def get_unsent_today_tomorrow(self) -> list[Notice]:
-        start = self._day_start(0)
-        end = self._day_start(2)
+        today = date.today()
+        days = [today.isoformat(), self.next_workday(today).isoformat()]
         with self._session_factory() as session:
             return list(
                 session.scalars(
                     select(Notice).where(
                         Notice.sent.is_(False),
-                        Notice.end_date >= start,
-                        Notice.end_date < end,
+                        func.date(Notice.end_date).in_(days),
                     ).order_by(Notice.end_date.asc())
                 ).all()
             )
@@ -96,3 +95,10 @@ class Database:
                     ).order_by(Notice.end_date.asc())
                 ).all()
             )
+    @staticmethod
+    def next_workday(d: date) -> date:
+        if d.weekday() == 4:
+            return d + timedelta(days=3)
+        if d.weekday() == 5:
+            return d + timedelta(days=2)
+        return d + timedelta(days=1)
