@@ -69,6 +69,7 @@ def main() -> None:
 
         for notice in notices:
             if is_excluded(notice.name, exclude, notice.okpd_code):
+                log.info("пропуск exclude %s %s %s", notice.number, notice.name, notice.okpd_code)
                 continue
             if db.exists(notice.link):
                 continue
