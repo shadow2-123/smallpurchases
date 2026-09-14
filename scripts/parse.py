@@ -1,7 +1,6 @@
 import json
 import logging
 import os
-import time
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -33,10 +32,18 @@ def load_exclude(path: Path) -> list[str]:
             words.append(line.lower())
     return words
 
+def is_electro(codes: str, prefixes: tuple[str, ...] = ("26", "27")) -> bool:
+    return any(
+        code.strip().startswith(prefixes)
+        for code in codes.split(",")
+        if code.strip()
+    )
 
-def is_excluded(name: str, words: list[str]) -> bool:
+def is_excluded(name: str, words: list[str], codes: str) -> bool:
     text = name.lower()
-    return any(word in text for word in words)
+    if not any(word in text for word in words):
+        return False
+    return not is_electro(codes)
 
 
 def main() -> None:
@@ -61,7 +68,7 @@ def main() -> None:
             break
 
         for notice in notices:
-            if is_excluded(notice.name, exclude):
+            if is_excluded(notice.name, exclude, notice.okpd_code):
                 continue
             if db.exists(notice.link):
                 continue
