@@ -44,11 +44,15 @@ def format_notice_plain(notice: Notice) -> tuple[str, str]:
 def format_notice_html(notice: Notice) -> tuple[str, str]:
     subject = format_subject(notice)
     url = f"https://wt.udmr.ru/smallpurchases/GzwSP/Notice?noticeLink={notice.link}"
-    body = (
-        f'<a href="{escape(url)}">Извещение</a>'
-        f"<br><br>{format_spec_html(notice.spec)}"
-        f"{format_docs_html(notice.docs)}"
-    )
+    body = f"""\
+    <html>
+      <body>
+        <p><a href="{escape(url)}">Открыть извещение</a></p>
+        {format_spec_html(notice.spec)}
+        {format_docs_html(notice.docs)}
+      </body>
+    </html>
+    """
     return subject, body
 
 def short_name(name: str, limit: int = 15) -> str:
