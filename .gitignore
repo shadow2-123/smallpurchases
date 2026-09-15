@@ -10,6 +10,7 @@ build/
 .env
 *.db
 *.sqlite3
+exclude.txt
 
 parse.log
 notify.log
