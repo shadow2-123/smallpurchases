@@ -45,7 +45,7 @@ def format_notice_html(notice: Notice) -> tuple[str, str]:
     subject = format_subject(notice)
     url = f"https://wt.udmr.ru/smallpurchases/GzwSP/Notice?noticeLink={notice.link}"
     body = (
-        f'<p><a href="{escape(url)}">Извещение</a></p><br><br>'
+        f'<a href="{escape(url)}">Извещение</a>'
         f"<br><br>{format_spec_html(notice.spec)}"
         f"{format_docs_html(notice.docs)}"
     )
