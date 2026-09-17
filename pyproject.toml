@@ -8,6 +8,8 @@ dependencies = [
     "pydantic",
     "sqlalchemy",
     "beautifulsoup4",
+    "fastapi",
+    "uvicorn"
 ]
 
 [build-system]

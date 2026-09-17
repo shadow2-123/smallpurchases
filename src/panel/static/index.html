@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>18mz</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header>
+    <div>
+      <p class="eyebrow">Малые закупки</p>
+      <h1>Панель</h1>
+    </div>
+  </header>
+
+  <main>
+    <section class="card">
+      <div class="card-head">
+        <h2>Словарь исключений</h2>
+        <button id="save" type="button">Сохранить</button>
+      </div>
+      <p class="hint">Одно слово или фраза на строку</p>
+      <textarea id="words" spellcheck="false"></textarea>
+      <p id="status" class="status"></p>
+    </section>
+
+    <section class="grid">
+      <article class="card">
+        <div class="card-head">
+          <h2>Парсер</h2>
+          <button id="parse-log" type="button">Обновить</button>
+        </div>
+        <pre id="parse"></pre>
+      </article>
+      <article class="card">
+        <div class="card-head">
+          <h2>Рассылка</h2>
+          <button id="notify-log" type="button">Обновить</button>
+        </div>
+        <pre id="notify"></pre>
+      </article>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
