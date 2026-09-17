@@ -10,17 +10,24 @@
 
 * { box-sizing: border-box; }
 
-body {
+html, body {
   margin: 0;
+}
+
+body {
   font-family: Segoe UI, system-ui, sans-serif;
   background: var(--bg);
   color: var(--text);
 }
 
 header, main {
-  max-width: 1100px;
+  width: min(1400px, 100%);
   margin: 0 auto;
-  padding: 24px 20px 0;
+  padding: 16px 20px;
+}
+
+main {
+  display: block;
 }
 
 .eyebrow {
@@ -32,7 +39,7 @@ header, main {
 }
 
 h1, h2 { margin: 0; }
-h1 { font-size: 28px; }
+h1 { font-size: 24px; }
 h2 { font-size: 16px; }
 
 .card {
@@ -40,7 +47,7 @@ h2 { font-size: 16px; }
   border: 1px solid var(--line);
   border-radius: 12px;
   padding: 16px;
-  margin-top: 20px;
+  margin-top: 16px;
 }
 
 .card-head {
@@ -63,8 +70,11 @@ h2 { font-size: 16px; }
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
-  padding-bottom: 32px;
+  margin-top: 16px;
+  padding-bottom: 24px;
 }
+
+.grid .card { height: 100%; }
 
 textarea, pre {
   width: 100%;
@@ -73,23 +83,24 @@ textarea, pre {
   border-radius: 8px;
   background: #0c1015;
   color: var(--text);
+  min-height: 0;
 }
 
 textarea {
-  min-height: 240px;
+  width: 100%;
+  height: 280px;
   padding: 12px;
   resize: vertical;
   font: 14px/1.4 Consolas, monospace;
 }
 
 pre {
-  min-height: 280px;
-  max-height: 420px;
+  width: 100%;
+  height: 360px;
   padding: 12px;
   overflow: auto;
   white-space: pre-wrap;
   font: 12px/1.45 Consolas, monospace;
-  color: #c5d0dc;
 }
 
 button {
@@ -105,5 +116,7 @@ button {
 button:hover { filter: brightness(1.08); }
 
 @media (max-width: 800px) {
+  html, body { height: auto; }
   .grid { grid-template-columns: 1fr; }
+  textarea, pre { min-height: 220px; }
 }
