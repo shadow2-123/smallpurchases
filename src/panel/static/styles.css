@@ -21,7 +21,8 @@ body {
 }
 
 header, main {
-  width: min(960px, 100%);
+  width: 100%;
+  max-width: 960px;
   margin: 0 auto;
   padding: 16px 20px;
 }
@@ -50,6 +51,8 @@ h2 { font-size: 16px; }
   border-radius: 12px;
   padding: 16px;
   margin-top: 16px;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .card-head {
@@ -87,6 +90,10 @@ textarea, pre {
   background: #0c1015;
   color: var(--text);
   min-height: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 textarea {
