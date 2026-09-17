@@ -21,10 +21,12 @@ body {
 }
 
 header, main {
-  width: min(1400px, 100%);
+  width: min(960px, 100%);
   margin: 0 auto;
   padding: 16px 20px;
 }
+
+
 
 main {
   display: block;
@@ -68,7 +70,7 @@ h2 { font-size: 16px; }
 
 .grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 16px;
   margin-top: 16px;
   padding-bottom: 24px;
