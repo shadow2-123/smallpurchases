@@ -68,13 +68,14 @@ def main() -> None:
             break
 
         for notice in notices:
-            if is_excluded(notice.name, exclude, notice.okpd_code):
-                log.info("пропуск exclude %s %s %s", notice.number, notice.name, notice.okpd_code)
-                continue
             if db.exists(notice.link):
                 continue
             spec_rows, doc_rows = client.parse_notice(notice)
-            db.add_new_notice(notice, spec_text(spec_rows), docs_text(doc_rows))
+            spec_text_str = spec_text(spec_rows)
+            if is_excluded(notice.name,spec_text_str, exclude, notice.okpd_code):
+                log.info("пропуск exclude %s %s %s", notice.number, notice.name, notice.okpd_code)
+                continue
+            db.add_new_notice(notice, spec_text_str, docs_text(doc_rows))
             total_new += 1
             log.info("новая %s %s", notice.number, notice.name)
 
