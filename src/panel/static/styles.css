@@ -77,7 +77,7 @@ h2 { font-size: 16px; }
   max-width: 100%;
 }
 
-.grid .card { height: 100%; }
+.grid .card { height: 100%; max-width: 100%}
 
 textarea, pre {
   width: 100%;
