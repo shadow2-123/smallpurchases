@@ -39,8 +39,8 @@ def is_electro(codes: str, prefixes: tuple[str, ...] = ("26", "27")) -> bool:
         if code.strip()
     )
 
-def is_excluded(name: str, words: list[str], codes: str) -> bool:
-    text = name.lower()
+def is_excluded(name: str, spec: str, words: list[str], codes: str) -> bool:
+    text = name.lower() + " " + spec.lower()
     if not any(word in text for word in words):
         return False
     return not is_electro(codes)
