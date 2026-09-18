@@ -12,6 +12,7 @@ from db.session import Database
 from db.models import Notice
 from formatters.notices import format_notice_html, format_notice_plain
 from mail.client import MailClient
+from filters import ExcludeFilter
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -33,8 +34,12 @@ def parse_args() -> str:
 
 
 def send_list(db: Database, mail: MailClient, to: str, notices: list[Notice]) -> None:
-    log.info("к отправке: %s", len(notices))
+    log.info("Начало рассылки")
+    filter_ = ExcludeFilter(ROOT / "exclude.txt")
     for notice in notices:
+        if filter_.is_excluded(notice.name, notice.spec, notice.okpd_code):
+            log.info("Пропущено: %s, окпд %s", notice.name, notice.okpd_code)
+            continue
         subject, body_html = format_notice_html(notice)
         _, body_plain = format_notice_plain(notice)
         try:
