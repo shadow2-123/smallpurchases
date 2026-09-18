@@ -35,6 +35,15 @@ document.getElementById("save").onclick = () =>
 document.getElementById("parse-log").onclick = refreshLogs;
 document.getElementById("notify-log").onclick = refreshLogs;
 
+document.getElementById("reload").onclick = () =>
+  loadExclude()
+    .then(() => {
+      document.getElementById("status").textContent = "загружено";
+    })
+    .catch((e) => {
+      document.getElementById("status").textContent = e;
+    });
+
 loadExclude().catch(console.error);
 refreshLogs();
 setInterval(refreshLogs, 5000);
