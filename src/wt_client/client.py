@@ -114,7 +114,7 @@ class WTClient:
 
     def parse_notice(self, notice: NoticeSchema) -> tuple[list, list]:
         resp = self._request_notice(notice.link)
-        if resp.status_code in (400, 401, 403):
+        if resp.status_code in (400, 401, 403, 500):
             self._auth()
             resp = self._request_notice(notice.link)
         resp.raise_for_status()
