@@ -48,7 +48,7 @@ def send_list(db: Database, mail: MailClient, to: str, notices: list[Notice]) ->
             log.exception("не ушло %s", notice.number)
             continue
         db.mark_sent(notice.link)
-        log.info("отправлено %s, на почту %s", notice.number, to)
+        log.info("отправлено %s, на почту %s", notice.name, to)
 
 
 def main() -> None:
