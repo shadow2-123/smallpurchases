@@ -55,6 +55,7 @@ def main() -> None:
             log.info("новая %s %s", notice.number, notice.name)
         total_new += page_new
         if page_new == 0:
+            log.info("Новых на странице нет, остановка, страница номер %s", page)
             break
         page += 1
 
