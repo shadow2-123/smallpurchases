@@ -40,7 +40,7 @@ def send_list(db: Database, mail: MailClient, client: WTClient, to: str, notices
 
     for notice in notices:
         if filter_.is_excluded(notice.name, notice.spec, notice.okpd_code):
-            log.info("Пропущено: %s, окпд %s", notice.name, notice.okpd_code)
+            log.info("Пропущено: %s", notice.name)
             continue
         subject, body_html = format_notice_html(notice)
         _, body_plain = format_notice_plain(notice)
