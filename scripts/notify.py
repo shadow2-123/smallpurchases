@@ -36,6 +36,7 @@ def parse_args() -> str:
 def send_list(db: Database, mail: MailClient, to: str, notices: list[Notice]) -> None:
     log.info("Начало рассылки")
     filter_ = ExcludeFilter(ROOT / "exclude.txt")
+
     for notice in notices:
         if filter_.is_excluded(notice.name, notice.spec, notice.okpd_code):
             log.info("Пропущено: %s, окпд %s", notice.name, notice.okpd_code)
@@ -65,14 +66,14 @@ def main() -> None:
         from_addr=os.getenv("MAIL_FROM"),
     )
     to = os.getenv("MAIL_TO")
-
     if mode == "big":
         notices = db.get_unsent_big(Decimal(str(settings["big_notice_sum"])))
     else:
         notices = db.get_unsent_today_tomorrow()
 
     log.info("режим %s", mode)
-    send_list(db, mail, to, notices)
+    with mail as smtp:
+        send_list(db, smtp, to, notices)
 
 
 if __name__ == "__main__":

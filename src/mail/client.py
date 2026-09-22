@@ -11,8 +11,32 @@ class MailClient:
         self.user = user
         self.password = password
         self.from_addr = from_addr
+        self.smtp: smtplib.SMTP_SSL | None = None
+
+    def connect(self):
+        self.smtp = smtplib.SMTP_SSL(self.host, self.port)
+        self.smtp.login(self.user, self.password)
+
+    def close(self) -> None:
+        if self.smtp is None:
+            return
+        try:
+            self.smtp.quit()
+        except smtplib.SMTPException:
+            log.exception("не закрыл SMTP")
+        self.smtp = None
+
+    def __enter__(self) -> "MailClient":
+        self.connect()
+        return self
+
+    def __exit__(self, *args) -> None:
+        self.close()
 
     def send(self, to: str, subject: str, html: str, plain: str) -> None:
+        if self.smtp is None:
+            raise RuntimeError("сначала connect()")
+
         msg = EmailMessage()
         msg["From"] = self.from_addr
         msg["To"] = to
@@ -21,9 +45,7 @@ class MailClient:
         msg.add_alternative(html, subtype="html")
 
         try:
-            with smtplib.SMTP_SSL(self.host, self.port) as smtp:
-                smtp.login(self.user, self.password)
-                smtp.send_message(msg)
+            self.smtp.send_message(msg)
         except smtplib.SMTPAuthenticationError:
             log.exception("неверный логин или пароль почты")
             raise
