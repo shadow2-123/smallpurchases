@@ -5,7 +5,7 @@ from typing import List
 import requests
 import re
 from wt_client.schemas import NoticeSchema
-from wt_client.notice_page import parse_spec, parse_docs
+from wt_client.notice_page import parse_spec, parse_docs_from_html
 
 
 class WTClient:
@@ -119,7 +119,7 @@ class WTClient:
             resp = self._request_notice(notice.link)
         resp.raise_for_status()
         html = resp.text
-        return parse_spec(html), parse_docs(html)
+        return parse_spec(html), parse_docs_from_html(html)
 
     def _request_notice(self, link: str) -> requests.Response:
         return self.session.get(

@@ -64,3 +64,4 @@ class MailClient:
                 self.smtp.send_message(msg)
             except smtplib.SMTPException:
                 log.exception("не отправилось на %s", to)
+                raise

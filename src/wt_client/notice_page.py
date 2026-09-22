@@ -20,7 +20,7 @@ def parse_spec(html: str) -> list[tuple[str, str, str, str]]:
     return rows
 
 
-def parse_docs(html: str) -> list[tuple[str, str]]:
+def parse_docs_from_html(html: str) -> list[tuple[str, str]]:
     soup = BeautifulSoup(html, "html.parser")
     docs = []
     for a in soup.select("div.tab table.ordercard a[href*='DownloadGzwFile']"):
