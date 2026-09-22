@@ -80,5 +80,5 @@ if __name__ == "__main__":
     try:
         main()
     except Exception:
-        log.exception("рассылка упала")
+        log.exception("Рассылка упала")
         raise
