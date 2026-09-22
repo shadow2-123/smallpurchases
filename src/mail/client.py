@@ -33,7 +33,7 @@ class MailClient:
     def __exit__(self, *args) -> None:
         self.close()
 
-    def send(self, to: str, subject: str, html: str, plain: str) -> None:
+    def send(self, to: str, subject: str, html: str, plain: str, attachments: list[tuple[str, bytes]] | None = None) -> None:
         if self.smtp is None:
             raise RuntimeError("сначала connect()")
 
@@ -43,6 +43,13 @@ class MailClient:
         msg["Subject"] = subject
         msg.set_content(plain)
         msg.add_alternative(html, subtype="html")
+        for filename, data in attachments or []:
+            msg.add_attachment(
+                data,
+                maintype="application",
+                subtype="octet-stream",
+                filename=filename,
+            )
 
         try:
             self.smtp.send_message(msg)

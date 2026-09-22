@@ -98,3 +98,12 @@ def format_docs_plain(docs: str) -> str:
         name, url = line.split("||", 1)
         lines.append(f"{name.strip()}: {url.strip()}")
     return "\n".join(lines)
+
+def parse_docs(docs: str) -> list[tuple[str, str]]:
+    rows = []
+    for line in docs.splitlines():
+        if not line.strip() or "||" not in line:
+            continue
+        name, url = line.split("||", 1)
+        rows.append((name.strip(), url.strip()))
+    return rows

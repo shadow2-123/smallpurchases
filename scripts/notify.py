@@ -10,9 +10,10 @@ from dotenv import load_dotenv
 
 from db.session import Database
 from db.models import Notice
-from formatters.notices import format_notice_html, format_notice_plain
+from formatters.notices import format_notice_html, format_notice_plain, parse_docs
 from mail.client import MailClient
 from filters import ExcludeFilter
+from wt_client import WTClient
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -33,7 +34,7 @@ def parse_args() -> str:
     return parser.parse_args().mode
 
 
-def send_list(db: Database, mail: MailClient, to: str, notices: list[Notice]) -> None:
+def send_list(db: Database, mail: MailClient, client: WTClient, to: str, notices: list[Notice]) -> None:
     log.info("Начало рассылки")
     filter_ = ExcludeFilter(ROOT / "exclude.txt")
 
@@ -43,13 +44,29 @@ def send_list(db: Database, mail: MailClient, to: str, notices: list[Notice]) ->
             continue
         subject, body_html = format_notice_html(notice)
         _, body_plain = format_notice_plain(notice)
+
+        attachments = []
+        for filename, url in parse_docs(notice.docs):
+            try:
+                data = client.download_file(url)
+            except Exception:
+                log.exception("не скачал %s %s", notice.number, filename)
+                continue
+            if len(data) > 8 * 1024 * 1024:
+                log.info("слишком большой %s %s", notice.number, filename)
+                continue
+            attachments.append((filename, data))
+        log.info("кладу вложений: %s", [name for name, _ in attachments])
+
         try:
-            mail.send(to, subject, body_html, body_plain)
+            mail.send(to, subject, body_html, body_plain, attachments)
         except smtplib.SMTPException:
             log.exception("не ушло %s", notice.number)
             continue
         db.mark_sent(notice.link)
         log.info("отправлено %s, на почту %s", notice.name, to)
+
+    log.info("Конец рассылки")
 
 
 def main() -> None:
@@ -72,8 +89,9 @@ def main() -> None:
         notices = db.get_unsent_today_tomorrow()
 
     log.info("режим %s", mode)
-    with mail as smtp:
-        send_list(db, smtp, to, notices)
+    client = WTClient(os.getenv("LOGIN"), os.getenv("PASSWORD"))
+    with mail:
+        send_list(db, mail, client, to, notices)
 
 
 if __name__ == "__main__":
