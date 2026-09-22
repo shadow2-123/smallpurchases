@@ -50,5 +50,10 @@ class MailClient:
             log.exception("неверный логин или пароль почты")
             raise
         except smtplib.SMTPException:
-            log.exception("не отправилось на %s", to)
-            raise
+            log.exception("сессия SMTP умерла, переподключаюсь")
+            self.close()
+            self.connect()
+            try:
+                self.smtp.send_message(msg)
+            except smtplib.SMTPException:
+                log.exception("не отправилось на %s", to)
