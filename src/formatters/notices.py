@@ -75,6 +75,7 @@ def format_subject(notice: Notice) -> str:
         notice.customer_name,
     ])
 
+
 def format_docs_html(docs: str) -> str:
     if not docs.strip():
         return ""
