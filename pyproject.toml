@@ -9,7 +9,8 @@ dependencies = [
     "sqlalchemy",
     "beautifulsoup4",
     "fastapi",
-    "uvicorn"
+    "uvicorn",
+    "transliterate"
 ]
 
 [build-system]

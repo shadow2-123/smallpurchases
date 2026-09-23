@@ -107,3 +107,14 @@ def parse_docs(docs: str) -> list[tuple[str, str]]:
         name, url = line.split("||", 1)
         rows.append((name.strip(), url.strip()))
     return rows
+
+from pathlib import Path
+from transliterate import translit
+
+def safe_filename(name: str) -> str:
+    ext = Path(name).suffix.lower() or ".bin"
+    stem = Path(name).stem
+    stem = translit(stem, "ru", reversed=True)
+    stem = "".join(ch if ch.isalnum() or ch in "._-" else "_" for ch in stem)
+    stem = stem.strip("._") or "file"
+    return stem + ext

@@ -2,6 +2,8 @@ import smtplib
 from email.message import EmailMessage
 import logging
 
+from formatters.notices import safe_filename
+
 log = logging.getLogger(__name__)
 
 class MailClient:
@@ -48,7 +50,7 @@ class MailClient:
                 data,
                 maintype="application",
                 subtype="octet-stream",
-                filename=filename,
+                filename=safe_filename(filename),
             )
 
         try:
