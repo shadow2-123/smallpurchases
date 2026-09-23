@@ -1,5 +1,7 @@
 from html import escape
 from db.models import Notice
+from pathlib import Path
+from transliterate import translit
 SEP = " | "
 
 def spec_text(rows: list[tuple[str, str, str, str]]) -> str:
@@ -108,8 +110,6 @@ def parse_docs(docs: str) -> list[tuple[str, str]]:
         rows.append((name.strip(), url.strip()))
     return rows
 
-from pathlib import Path
-from transliterate import translit
 
 def safe_filename(name: str) -> str:
     ext = Path(name).suffix.lower() or ".bin"
