@@ -3,7 +3,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import List
 
-from sqlalchemy import create_engine, select, func
+from sqlalchemy import create_engine, select, func, update
 from sqlalchemy.orm import sessionmaker
 
 from db.models import Base, Notice
@@ -111,3 +111,8 @@ class Database:
         if d.weekday() == 5:
             return d + timedelta(days=2)
         return d + timedelta(days=1)
+
+    def reset_ignored(self) -> None:
+        with self._session_factory() as session:
+            session.execute(update(Notice).where(Notice.sent == -1).values(sent=0))
+            session.commit()

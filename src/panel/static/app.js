@@ -44,6 +44,16 @@ document.getElementById("reload").onclick = () =>
       document.getElementById("status").textContent = e;
     });
 
+document.getElementById("reset-ignored").onclick = async () => {
+  try {
+    await getJson("/api/reset-ignored", { method: "POST" });
+    document.getElementById("status").textContent =
+      "игнор сброшен, уйдут на ближайшей рассылке";
+  } catch (e) {
+    document.getElementById("status").textContent = e;
+  }
+};
+
 loadExclude().catch(console.error);
 refreshLogs();
 setInterval(refreshLogs, 5000);
