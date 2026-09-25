@@ -38,7 +38,7 @@ class Database:
                     okpd_code=notice.okpd_code,
                     spec=spec,
                     docs=docs,
-                    sent=False,
+                    sent=0,
                 )
             )
             session.commit()
@@ -49,7 +49,16 @@ class Database:
             notice = session.get(Notice, link)
             if notice is None:
                 return
-            notice.sent = True
+            notice.sent = 1
+            session.commit()
+
+
+    def mark_ignored(self, link: str) -> None:
+        with self._session_factory() as session:
+            notice = session.get(Notice, link)
+            if notice is None:
+                return
+            notice.sent = -1
             session.commit()
 
     def get_all_unsent(self) -> List[Notice]:
@@ -89,7 +98,7 @@ class Database:
             return list(
                 session.scalars(
                     select(Notice).where(
-                        Notice.sent.is_(False),
+                        Notice.sent == 0,
                         Notice.end_date >= start,
                         Notice.amount >= min_amount,
                     ).order_by(Notice.end_date.asc())

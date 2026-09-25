@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import DateTime, Numeric, String, Text, Boolean
+from sqlalchemy import DateTime, Numeric, String, Text, Boolean, Integer
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -23,4 +23,4 @@ class Notice(Base):
     okpd_code: Mapped[str] = mapped_column(String(255))
     spec: Mapped[str] = mapped_column(Text)
     docs: Mapped[str] = mapped_column(Text)
-    sent: Mapped[bool] = mapped_column(Boolean)
+    sent: Mapped[int] = mapped_column(Integer)
