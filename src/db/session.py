@@ -65,7 +65,7 @@ class Database:
         with self._session_factory() as session:
             return list(
             session.scalars(
-                select(Notice).where(Notice.sent == False)
+                select(Notice).where(Notice.sent == 0)
             ).all()
         )
 
@@ -86,7 +86,7 @@ class Database:
             return list(
                 session.scalars(
                     select(Notice).where(
-                        Notice.sent.is_(False),
+                        Notice.sent == 0,
                         func.date(Notice.end_date).in_(days),
                     ).order_by(Notice.end_date.asc())
                 ).all()
