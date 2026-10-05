@@ -128,7 +128,10 @@ class WTClient:
             headers={"Referer": f"{self.BASE}/GzwSP/NoticesGrid"},
         )
 
-    def download_file(self, link: str, timeout: int = 20 ) -> bytes:
+    def download_file(self, link: str, timeout: int = 20) -> bytes:
         resp = self.session.get(link, timeout=timeout)
+        if resp.status_code in (400, 401, 403, 500):
+            self._auth()
+            resp = self.session.get(link, timeout=timeout)
         resp.raise_for_status()
         return resp.content
