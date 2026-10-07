@@ -20,3 +20,6 @@ notify.log
 .vscode/
 .DS_Store
 Thumbs.db
+
+samples/
+samples.zip
