@@ -48,7 +48,7 @@ def send_list(db: Database, mail: MailClient, client: WTClient, to: str, notices
         _, body_plain = format_notice_plain(notice)
 
         attachments = []
-        document_parse_results = dict()
+        document_parse_results = {}
         for filename, url in parse_docs(notice.docs):
             try:
                 data = client.download_file(url)
@@ -59,7 +59,7 @@ def send_list(db: Database, mail: MailClient, client: WTClient, to: str, notices
                 log.info("слишком большой %s %s", notice.number, filename)
                 continue
             document_parse_results += {filename: data}
-            attachments.append((filename, data))
+            attachments.append((filename, DocumentParser().parse(data, filename)))
 
         log.info("кладу вложений: %s", [name for name, _ in attachments])
 

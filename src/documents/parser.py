@@ -22,6 +22,12 @@ class DocumentParser:
         delivery_terms = self._find_delivery_terms(document)
         delivery_places = self._find_delivery_places(document)
 
+        delivery_places = [
+            place
+            for place in delivery_places
+            if place not in delivery_terms
+        ]
+
         return DocumentParseResult(
             products_list=products_list,
             delivery_terms=delivery_terms,
