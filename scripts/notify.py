@@ -44,9 +44,8 @@ def send_list(db: Database, mail: MailClient, client: WTClient, to: str, notices
             log.info("Пропущено: %s", notice.name)
             db.mark_ignored(notice.link)
             continue
-        subject, body_html = format_notice_html(notice)
-        _, body_plain = format_notice_plain(notice)
 
+        document_parser = DocumentParser()
         attachments = []
         document_parse_results = {}
         for filename, url in parse_docs(notice.docs):
@@ -58,8 +57,21 @@ def send_list(db: Database, mail: MailClient, client: WTClient, to: str, notices
             if len(data) > 8 * 1024 * 1024:
                 log.info("слишком большой %s %s", notice.number, filename)
                 continue
-            document_parse_results += {filename: data}
-            attachments.append((filename, DocumentParser().parse(data, filename)))
+            attachments.append((filename, data))
+            try:
+                document_parse_results[filename] = document_parser.parse(
+                    data,
+                    filename,
+                )
+            except Exception:
+                log.exception(
+                    "не распарсил %s %s",
+                    notice.number,
+                    filename,
+                )
+
+        subject, body_html = format_notice_html(notice, document_parse_results)
+        _, body_plain = format_notice_plain(notice, document_parse_results)
 
         log.info("кладу вложений: %s", [name for name, _ in attachments])
 
