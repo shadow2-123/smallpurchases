@@ -212,7 +212,7 @@ class DocumentParser:
     @staticmethod
     def _split_paragraph(text: str) -> List[str]:
         parts = re.split(
-            r"(?=\b\d{1,2}(?:\.\d{1,2}){1,3}\.(?=\s*[А-ЯЁA-Z]))",
+            r"(?=(?<!\d)[1-9](?:\.\d{1,2})+\.\s*[А-ЯЁA-Z])",
             text,
         )
 
