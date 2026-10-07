@@ -156,7 +156,6 @@ def format_document_info_html(
     ]
 
     if terms:
-        parts.append("<p><b>Срок поставки:</b></p>")
         parts.append(
             "<ul>"
             + "".join(f"<li>{escape(term)}</li>" for term in terms)
@@ -164,7 +163,6 @@ def format_document_info_html(
         )
 
     if places:
-        parts.append("<p><b>Место поставки:</b></p>")
         parts.append(
             "<ul>"
             + "".join(f"<li>{escape(place)}</li>" for place in places)
@@ -200,12 +198,10 @@ def format_document_info_plain(
 
     if terms:
         lines.append("")
-        lines.append("Срок поставки:")
         lines.extend(f"- {term}" for term in terms)
 
     if places:
         lines.append("")
-        lines.append("Место поставки:")
         lines.extend(f"- {place}" for place in places)
 
     return "\n".join(lines)
