@@ -14,6 +14,7 @@ from formatters.notices import format_notice_html, format_notice_plain, parse_do
 from mail.client import MailClient
 from filters import ExcludeFilter
 from wt_client import WTClient
+from documents import DocumentParser
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -47,6 +48,7 @@ def send_list(db: Database, mail: MailClient, client: WTClient, to: str, notices
         _, body_plain = format_notice_plain(notice)
 
         attachments = []
+        document_parse_results = dict()
         for filename, url in parse_docs(notice.docs):
             try:
                 data = client.download_file(url)
@@ -56,7 +58,9 @@ def send_list(db: Database, mail: MailClient, client: WTClient, to: str, notices
             if len(data) > 8 * 1024 * 1024:
                 log.info("слишком большой %s %s", notice.number, filename)
                 continue
+            document_parse_results += {filename: data}
             attachments.append((filename, data))
+
         log.info("кладу вложений: %s", [name for name, _ in attachments])
 
         try:
