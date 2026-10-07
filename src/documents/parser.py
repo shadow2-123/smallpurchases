@@ -18,7 +18,7 @@ class DocumentParser:
 
         document = self._read(data, suffix.lstrip("."))
 
-        products_list = self._find_products(document)
+        products_list = []
         delivery_terms = self._find_delivery_terms(document)
         delivery_places = self._find_delivery_places(document)
 
@@ -75,7 +75,7 @@ class DocumentParser:
         )
 
     def _find_products(self, document: ParsedDocumentText) -> List[Product]:
-        pass
+        return []
 
     def _find_delivery_terms(
             self,
