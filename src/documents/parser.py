@@ -12,17 +12,20 @@ class DocumentParser:
         if suffix not in {".doc", ".docx"}:
             return DocumentParseResult(
                 products_list=[],
-                delivery_term=None,
+                delivery_terms=[],
+                delivery_places=[]
             )
 
         document = self._read(data, suffix.lstrip("."))
 
         products_list = self._find_products(document)
-        delivery_term = self._find_delivery_term(document)
+        delivery_terms = self._find_delivery_terms(document)
+        delivery_places = self._find_delivery_places(document)
 
         return DocumentParseResult(
             products_list=products_list,
-            delivery_term=delivery_term,
+            delivery_terms=delivery_terms,
+            delivery_places=delivery_places,
         )
 
     def _read(self, data: bytes, format_: str) -> ParsedDocumentText:
@@ -40,7 +43,9 @@ class DocumentParser:
                     text = self._extract_text(element.get("content", []))
 
                     if text:
-                        paragraphs.append(text)
+                        paragraphs.extend(
+                            self._split_paragraph(text)
+                        )
 
                 elif element_type == "table":
                     rows = []
@@ -66,20 +71,25 @@ class DocumentParser:
     def _find_products(self, document: ParsedDocumentText) -> List[Product]:
         pass
 
-    def _find_delivery_term(
+    def _find_delivery_terms(
             self,
             document: ParsedDocumentText,
-    ) -> str | None:
+    ) -> List[str]:
         delivery_keywords = (
             "срок поставки",
             "сроки поставки",
+            "срок передачи",
+            "сроки передачи",
             "срок исполнения контракта",
             "поставка товара",
             "поставить товар",
             "поставка осуществляется",
             "поставка производится",
             "поставка должна быть",
-            "передачи",
+            "доставляет товар",
+            "доставка товара",
+            "поставка товара силами",
+            "поставка товара по адресу заказчика",
         )
 
         candidates = list(document.paragraphs)
@@ -87,17 +97,28 @@ class DocumentParser:
         for table in document.tables:
             for row in table.rows:
                 text = " ".join(cell for cell in row if cell)
+
                 if text:
                     candidates.append(text)
+
+        result = []
 
         for text in candidates:
             normalized = self._normalize_text(text)
             lower = normalized.lower()
 
-            if any(keyword in lower for keyword in delivery_keywords):
-                return normalized
+            if not any(
+                    keyword in lower
+                    for keyword in delivery_keywords
+            ):
+                continue
 
-        return None
+            if not self._has_time_expression(normalized):
+                continue
+
+            result.append(normalized)
+
+        return result
 
     def _extract_text(self, content: list[dict[str, Any]]) -> str:
         parts = []
@@ -120,3 +141,79 @@ class DocumentParser:
     @staticmethod
     def _normalize_text(text: str) -> str:
         return re.sub(r"\s+", " ", text).strip()
+
+    @staticmethod
+    def _has_time_expression(text: str) -> bool:
+        lower = text.lower()
+
+        time_keywords = (
+            "в течение",
+            "в течении",
+            "не позднее",
+            "однократно до",
+            "однократно, до",
+            "в период с",
+            "календарных дней",
+            "рабочих дней",
+        )
+
+        if any(keyword in lower for keyword in time_keywords):
+            return True
+
+        return bool(
+            re.search(r"\b\d{1,2}\.\d{1,2}\.\d{4}\b", text)
+        )
+
+    def _find_delivery_places(
+            self,
+            document: ParsedDocumentText,
+    ) -> List[str]:
+        delivery_place_keywords = (
+            "место поставки",
+            "место доставки",
+            "адрес поставки",
+            "адрес доставки",
+            "доставляет товар заказчику по адресу",
+            "доставка товара по адресу",
+            "поставка товара по адресу",
+            "передача товара осуществляется по адресу",
+            "передача товара по адресу",
+            "поставка товара силами",
+            "поставка товара по адресу заказчика",
+        )
+
+        candidates = list(document.paragraphs)
+
+        for table in document.tables:
+            for row in table.rows:
+                text = " ".join(cell for cell in row if cell)
+
+                if text:
+                    candidates.append(text)
+
+        result = []
+
+        for text in candidates:
+            normalized = self._normalize_text(text)
+            lower = normalized.lower()
+
+            if any(
+                    keyword in lower
+                    for keyword in delivery_place_keywords
+            ):
+                result.append(normalized)
+
+        return result
+
+    @staticmethod
+    def _split_paragraph(text: str) -> List[str]:
+        parts = re.split(
+            r"(?=(?<!\d)\d{1,2}(?:\.\d{1,2})+\.\s)",
+            text,
+        )
+
+        return [
+            part.strip()
+            for part in parts
+            if part.strip()
+        ]

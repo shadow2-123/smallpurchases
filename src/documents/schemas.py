@@ -11,7 +11,8 @@ class Product:
 @dataclass
 class DocumentParseResult:
     products_list: List[Product]
-    delivery_term: str | None
+    delivery_terms: List[str]
+    delivery_places: List[str]
 
 @dataclass
 class Table:
