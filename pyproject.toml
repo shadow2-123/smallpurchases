@@ -10,7 +10,8 @@ dependencies = [
     "beautifulsoup4",
     "fastapi",
     "uvicorn",
-    "transliterate"
+    "transliterate",
+    "office-oxide"
 ]
 
 [build-system]

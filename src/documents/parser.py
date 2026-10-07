@@ -1,36 +1,88 @@
 from pathlib import Path
-from typing import List, Dict, Tuple
-
-from documents.schemas import DocumentParseResult, ParsedDocumentText, Product
+from typing import List, Any
+from office_oxide import Document
+from documents.schemas import DocumentParseResult, ParsedDocumentText, Product, Table
 
 
 class DocumentParser:
     def parse(self, data: bytes, filename: str) -> DocumentParseResult:
         suffix = Path(filename).suffix.lower()
 
-        if suffix == ".docx":
-            paragraphs, tables = self._read_docx(data)
-        elif suffix == ".doc":
-            paragraphs, tables = self._read_doc(data)
-        else:
-            return DocumentParseResult(products_list=[], delivery_term=None)
+        if suffix not in {".doc", ".docx"}:
+            return DocumentParseResult(
+                products_list=[],
+                delivery_term=None,
+            )
 
-        products_list = self._find_products(paragraphs, tables)
-        delivery_term = self._find_delivery_term(paragraphs, tables)
+        document = self._read(data, suffix.lstrip("."))
+
+        products_list = self._find_products(document)
+        delivery_term = self._find_delivery_term(document)
 
         return DocumentParseResult(
             products_list=products_list,
             delivery_term=delivery_term,
         )
 
-    def _read_doc(self, data: bytes) -> ParsedDocumentText:
-        pass
+    def _read(self, data: bytes, format_: str) -> ParsedDocumentText:
+        with Document.from_bytes(data, format_) as document:
+            ir = document.to_ir()
 
-    def _read_docx(self, data: bytes) -> ParsedDocumentText:
-        pass
+        paragraphs = []
+        tables = []
+
+        for section in ir.get("sections", []):
+            for element in section.get("elements", []):
+                element_type = element.get("type")
+
+                if element_type in {"paragraph", "heading"}:
+                    text = self._extract_text(element.get("content", []))
+
+                    if text:
+                        paragraphs.append(text)
+
+                elif element_type == "table":
+                    rows = []
+
+                    for row in element.get("rows", []):
+                        cells = []
+
+                        for cell in row.get("cells", []):
+                            text = self._extract_text(
+                                cell.get("content", [])
+                            )
+                            cells.append(text)
+
+                        rows.append(cells)
+
+                    tables.append(Table(rows=rows))
+
+        return ParsedDocumentText(
+            paragraphs=paragraphs,
+            tables=tables,
+        )
 
     def _find_products(self, document: ParsedDocumentText) -> List[Product]:
         pass
 
-    def _find_delivery_term(self, document: ParsedDocumentText) -> str:
+    def _find_delivery_term(self, document: ParsedDocumentText) -> str | None:
         pass
+
+    def _extract_text(self, content: list[dict[str, Any]]) -> str:
+        parts = []
+
+        for item in content:
+            if item.get("type") == "text":
+                parts.append(item.get("text", ""))
+
+            elif item.get("type") == "line_break":
+                parts.append(" ")
+
+            if "content" in item:
+                parts.append(
+                    self._extract_text(item["content"])
+                )
+
+        return " ".join(
+            "".join(parts).split()
+        )
