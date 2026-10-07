@@ -1,24 +1,24 @@
 from pathlib import Path
-import sys
 
 from documents.parser import DocumentParser
 
 
-path = Path(sys.argv[1])
+SAMPLES_DIR = Path("samples")
 
 parser = DocumentParser()
-document = parser._read(
-    data=path.read_bytes(),
-    format_=path.suffix.lower().lstrip("."),
-)
 
-print("\n=== PARAGRAPHS ===")
-for i, paragraph in enumerate(document.paragraphs):
-    print(f"{i}: {paragraph}")
+for path in sorted(SAMPLES_DIR.iterdir()):
+    if path.suffix.lower() not in {".doc", ".docx"}:
+        continue
 
-print("\n=== TABLES ===")
-for table_index, table in enumerate(document.tables):
-    print(f"\n--- TABLE {table_index} ---")
+    document = parser._read(
+        data=path.read_bytes(),
+        format_=path.suffix.lower().lstrip("."),
+    )
 
-    for row_index, row in enumerate(table.rows):
-        print(f"{row_index}: {row}")
+    delivery_term = parser._find_delivery_term(document)
+
+    print("=" * 80)
+    print(path.name)
+    print(f"DELIVERY: {delivery_term}")
+    print()

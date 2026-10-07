@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 from typing import List, Any
 from office_oxide import Document
@@ -65,8 +66,38 @@ class DocumentParser:
     def _find_products(self, document: ParsedDocumentText) -> List[Product]:
         pass
 
-    def _find_delivery_term(self, document: ParsedDocumentText) -> str | None:
-        pass
+    def _find_delivery_term(
+            self,
+            document: ParsedDocumentText,
+    ) -> str | None:
+        delivery_keywords = (
+            "срок поставки",
+            "сроки поставки",
+            "срок исполнения контракта",
+            "поставка товара",
+            "поставить товар",
+            "поставка осуществляется",
+            "поставка производится",
+            "поставка должна быть",
+            "передачи",
+        )
+
+        candidates = list(document.paragraphs)
+
+        for table in document.tables:
+            for row in table.rows:
+                text = " ".join(cell for cell in row if cell)
+                if text:
+                    candidates.append(text)
+
+        for text in candidates:
+            normalized = self._normalize_text(text)
+            lower = normalized.lower()
+
+            if any(keyword in lower for keyword in delivery_keywords):
+                return normalized
+
+        return None
 
     def _extract_text(self, content: list[dict[str, Any]]) -> str:
         parts = []
@@ -86,3 +117,6 @@ class DocumentParser:
         return " ".join(
             "".join(parts).split()
         )
+    @staticmethod
+    def _normalize_text(text: str) -> str:
+        return re.sub(r"\s+", " ", text).strip()
