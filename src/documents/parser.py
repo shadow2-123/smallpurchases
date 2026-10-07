@@ -99,7 +99,9 @@ class DocumentParser:
                 text = " ".join(cell for cell in row if cell)
 
                 if text:
-                    candidates.append(text)
+                    candidates.extend(
+                        self._split_paragraph(text)
+                    )
 
         result = []
 
@@ -189,7 +191,9 @@ class DocumentParser:
                 text = " ".join(cell for cell in row if cell)
 
                 if text:
-                    candidates.append(text)
+                    candidates.extend(
+                        self._split_paragraph(text)
+                    )
 
         result = []
 
@@ -208,7 +212,7 @@ class DocumentParser:
     @staticmethod
     def _split_paragraph(text: str) -> List[str]:
         parts = re.split(
-            r"(?=(?<!\d)\d{1,2}(?:\.\d{1,2})+\.\s)",
+            r"(?=\b\d{1,2}(?:\.\d{1,2}){1,3}\.(?=\s*[А-ЯЁA-Z]))",
             text,
         )
 
