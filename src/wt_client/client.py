@@ -16,8 +16,10 @@ class WTClient:
         self.login = login
         self.password = password
         self.session = requests.Session()
+        self.session.trust_env = False
         self.csrf_token = None
         self._auth()
+
 
 
     @staticmethod
@@ -36,7 +38,7 @@ class WTClient:
 
         self.session = requests.Session()
         self.csrf_token = None
-
+        self.session.trust_env = False
         self.session.headers.update({
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
         })
