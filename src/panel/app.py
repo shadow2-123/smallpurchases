@@ -59,6 +59,8 @@ def put_exclude(payload: ExcludeIn):
         if word:
             cleaned.append(word)
     EXCLUDE.write_text("\n".join(cleaned) + "\n", encoding="utf-8")
+    settings = json.loads((ROOT / "settings.json").read_text(encoding="utf-8"))
+    Database(str(ROOT / settings["db_path"])).reset_ignored()
     return {"words": cleaned}
 
 
@@ -67,10 +69,3 @@ def get_logs(name: str, lines: int = Query(150, ge=1, le=1000)):
     if name not in ("parse", "notify"):
         raise HTTPException(400, "only parse or notify")
     return {"name": name, "text": tail(ROOT / f"{name}.log", lines)}
-
-
-@app.post("/api/reset-ignored")
-def reset_ignored():
-    settings = json.loads((ROOT / "settings.json").read_text(encoding="utf-8"))
-    Database(str(ROOT / settings["db_path"])).reset_ignored()
-    return {"ok": True}

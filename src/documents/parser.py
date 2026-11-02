@@ -90,6 +90,7 @@ class DocumentParser:
             "поставка товара",
             "поставить товар",
             "поставка осуществляется",
+            "доставка и разгрузка",
             "поставка производится",
             "поставка должна быть",
             "доставляет товар",
@@ -99,16 +100,7 @@ class DocumentParser:
             "продукция доставляется",
         )
 
-        candidates = list(document.paragraphs)
-
-        for table in document.tables:
-            for row in table.rows:
-                text = " ".join(cell for cell in row if cell)
-
-                if text:
-                    candidates.extend(
-                        self._split_paragraph(text)
-                    )
+        candidates = self._candidates(document)
 
         result = []
 
@@ -116,44 +108,66 @@ class DocumentParser:
             normalized = self._normalize_text(text)
             lower = normalized.lower()
 
-            if not any(
-                    keyword in lower
-                    for keyword in delivery_keywords
-            ):
-                continue
-
-            if not self._has_time_expression(normalized):
+            explicit_term = re.search(
+                r"^(?:\d+(?:\.\d+)*\.?\s*)?срок(?:и|а|ов)?\s+(?:поставки|доставки|передачи|исполнения контракта)",
+                lower,
+            )
+            delivery = any(keyword in lower for keyword in delivery_keywords) or re.search(
+                r"\b(?:товар\w*|продукци\w*)\s+(?:поставля\w*|доставля\w*)", lower
+            )
+            if not explicit_term and not (delivery and self._has_time_expression(normalized)):
                 continue
 
             result.append(normalized)
 
-        return result
+        return self._unique(result)
 
     def _extract_text(self, content: list[dict[str, Any]]) -> str:
+        # Runs are adjacent pieces of a word; paragraphs are separate blocks.
         parts = []
-
         for item in content:
-            if item.get("type") == "text":
+            kind = item.get("type")
+            if kind == "text":
                 parts.append(item.get("text", ""))
-
-            elif item.get("type") == "line_break":
-                parts.append(" ")
-
+            elif kind == "line_break":
+                parts.append("\n")
             if "content" in item:
-                parts.append(
-                    self._extract_text(item["content"])
-                )
+                nested = self._extract_text(item["content"])
+                if kind in {"paragraph", "heading"}:
+                    parts.extend(["\n", nested, "\n"])
+                else:
+                    parts.append(nested)
+        return "".join(parts)
 
-        return " ".join(
-            "".join(parts).split()
-        )
+    def _candidates(self, document: ParsedDocumentText) -> List[str]:
+        candidates = list(document.paragraphs)
+        for table in document.tables:
+            for row in table.rows:
+                text = " ".join(cell.strip() for cell in row if cell.strip())
+                candidates.extend(self._split_paragraph(text))
+        return candidates
+
+    def _unique(self, texts: List[str]) -> List[str]:
+        result = []
+        seen = set()
+        for text in texts:
+            text = self._normalize_text(text)
+            key = text.casefold().replace("ё", "е")
+            if key and key not in seen:
+                result.append(text)
+                seen.add(key)
+        return result
+
     @staticmethod
     def _normalize_text(text: str) -> str:
         return re.sub(r"\s+", " ", text).strip()
 
     @staticmethod
     def _has_time_expression(text: str) -> bool:
-        lower = text.lower()
+        lower = re.sub(
+            r"\bот\s+\d{1,2}[./-]\d{1,2}[./-]\d{2,4}\s*(?:г(?:ода|\.)?\s*)?№\s*[\w-]+",
+            "", text.lower(),
+        )
 
         time_keywords = (
             "в течение",
@@ -169,9 +183,12 @@ class DocumentParser:
         if any(keyword in lower for keyword in time_keywords):
             return True
 
-        return bool(
-            re.search(r"\b\d{1,2}\.\d{1,2}\.\d{4}\b", text)
-        )
+        return bool(re.search(
+            r"\b(?:0?[1-9]|[12]\d|3[01])[./-](?:0?[1-9]|1[0-2])[./-](?:\d{4}|\d{2})\b"
+            r"|\b\d{1,2}\s+(?:января|февраля|марта|апреля|мая|июня|июля|августа|сентября|октября|ноября|декабря)\b"
+            r"|\b(?:через|за)\s+\d+\s*(?:\([^)]*\)\s*)?(?:(?:рабочих|календарных)\s+)?(?:дн|день|недел|месяц|час)"
+            r"|\bс\s+\d{1,2}[.:]\d{2}\s+до\s+\d{1,2}[.:]\d{2}", lower,
+        ))
 
     def _find_delivery_places(
             self,
@@ -192,16 +209,7 @@ class DocumentParser:
             "продукция доставляется",
         )
 
-        candidates = list(document.paragraphs)
-
-        for table in document.tables:
-            for row in table.rows:
-                text = " ".join(cell for cell in row if cell)
-
-                if text:
-                    candidates.extend(
-                        self._split_paragraph(text)
-                    )
+        candidates = self._candidates(document)
 
         result = []
 
@@ -209,23 +217,42 @@ class DocumentParser:
             normalized = self._normalize_text(text)
             lower = normalized.lower()
 
-            if any(
-                    keyword in lower
-                    for keyword in delivery_place_keywords
+            if any(keyword in lower for keyword in delivery_place_keywords) or (
+                re.search(r"\b(?:постав\w*|достав\w*|переда\w*|получател\w*)\b", lower)
+                and re.search(r"\bпо адресу\b", lower)
             ):
                 result.append(normalized)
 
-        return result
+        # An address column describes all following recipients, even when the
+        # individual rows contain no delivery keywords. Keep the whole row.
+        for table in document.tables:
+            address_columns = []
+            for row in table.rows:
+                headers = [i for i, cell in enumerate(row) if re.search(
+                    r"^(?:адрес|место)\s+(?:получателя|получателей|поставки|доставки)\s*[:.]?$",
+                    self._normalize_text(cell).lower(),
+                )]
+                if headers:
+                    address_columns = headers
+                    # Only header labels, not ordinary label/value rows.
+                    if all(len(self._normalize_text(row[i])) < 70 for i in headers):
+                        continue
+                if address_columns and any(i < len(row) and row[i].strip() for i in address_columns):
+                    result.append(" ".join(cell for cell in row if cell.strip()))
+
+        return self._unique(result)
 
     @staticmethod
     def _split_paragraph(text: str) -> List[str]:
-        parts = re.split(
-            r"(?=(?<!\d)[1-9](?:\.\d{1,2})+\.\s*[А-ЯЁA-Z])",
-            text,
-        )
-
-        return [
-            part.strip()
-            for part in parts
-            if part.strip()
-        ]
+        parts = []
+        start = 0
+        pattern = r"(?<!\d)(?<!\d\.)\d{1,3}(?:\.\d{1,3})+\.\s*(?=[А-ЯЁA-Z])"
+        for match in re.finditer(pattern, text):
+            prefix = text[:match.start()]
+            if re.search(r"(?:\bп\.|\bпп\.|\bпункт[а-я]*|\bподпункт[а-я]*)\s*$", prefix, re.I):
+                continue
+            if match.start() > start:
+                parts.append(text[start:match.start()].strip())
+            start = match.start()
+        parts.append(text[start:].strip())
+        return [part for part in parts if part]
