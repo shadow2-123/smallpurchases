@@ -45,6 +45,7 @@ def main() -> None:
         if not notices:
             break
         page_new = 0
+        page_error = 0
         for notice in notices:
             try:
                 if db.exists(notice.link):
@@ -55,9 +56,10 @@ def main() -> None:
                 page_new += 1
                 log.info("новая %s %s", notice.number, notice.name)
             except Exception as e:
+                page_error += 1
                 log.error("Error while parsing notice: %s", e)
         total_new += page_new
-        if page_new == 0:
+        if page_new == 0 and page_error == 0:
             log.info("Новых на странице нет, остановка, страница номер %s", page)
             break
         page += 1
