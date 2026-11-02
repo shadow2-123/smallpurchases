@@ -46,13 +46,16 @@ def main() -> None:
             break
         page_new = 0
         for notice in notices:
-            if db.exists(notice.link):
-                continue
-            spec_rows, doc_rows = client.parse_notice(notice)
-            spec_text_str = spec_text(spec_rows)
-            db.add_new_notice(notice, spec_text_str, docs_text(doc_rows))
-            page_new += 1
-            log.info("новая %s %s", notice.number, notice.name)
+            try:
+                if db.exists(notice.link):
+                    continue
+                spec_rows, doc_rows = client.parse_notice(notice)
+                spec_text_str = spec_text(spec_rows)
+                db.add_new_notice(notice, spec_text_str, docs_text(doc_rows))
+                page_new += 1
+                log.info("новая %s %s", notice.number, notice.name)
+            except Exception as e:
+                log.error("Error while parsing notice: %s", e)
         total_new += page_new
         if page_new == 0:
             log.info("Новых на странице нет, остановка, страница номер %s", page)

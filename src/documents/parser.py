@@ -223,8 +223,6 @@ class DocumentParser:
             ):
                 result.append(normalized)
 
-        # An address column describes all following recipients, even when the
-        # individual rows contain no delivery keywords. Keep the whole row.
         for table in document.tables:
             address_columns = []
             for row in table.rows:
@@ -234,7 +232,6 @@ class DocumentParser:
                 )]
                 if headers:
                     address_columns = headers
-                    # Only header labels, not ordinary label/value rows.
                     if all(len(self._normalize_text(row[i])) < 70 for i in headers):
                         continue
                 if address_columns and any(i < len(row) and row[i].strip() for i in address_columns):
