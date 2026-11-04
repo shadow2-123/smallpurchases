@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import smtplib
+from datetime import date
 from decimal import Decimal
 from pathlib import Path
 
@@ -88,10 +89,21 @@ def send_list(db: Database, mail: MailClient, client: WTClient, to: str, notices
 
 def main() -> None:
     mode = parse_args()
+
     settings = json.loads((ROOT / "settings.json").read_text(encoding="utf-8"))
     load_dotenv()
 
     db = Database(str(ROOT / settings["db_path"]))
+    today = date.today()
+
+    if not db.is_month_ready(int(str(today.year) + str(today.month))):
+        raise RuntimeError(
+            f"Календарь за {today.month:02d}.{today.year} не готов"
+        )
+
+    if db.is_non_working_day(today):
+        log.info("Сегодня %s — нерабочий день, рассылка пропущена", today)
+        return
     mail = MailClient(
         host=os.getenv("SMTP_HOST"),
         port=int(os.getenv("SMTP_PORT", "465")),
@@ -103,7 +115,7 @@ def main() -> None:
     if mode == "big":
         notices = db.get_unsent_big(Decimal(str(settings["big_notice_sum"])))
     else:
-        notices = db.get_unsent_today_tomorrow()
+        notices = db.get_unsent_today_tomorrow(today)
 
     log.info("режим %s", mode)
     client = WTClient(os.getenv("LOGIN"), os.getenv("PASSWORD"))

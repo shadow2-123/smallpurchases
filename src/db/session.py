@@ -6,8 +6,12 @@ from typing import List
 from sqlalchemy import create_engine, select, func, update
 from sqlalchemy.orm import sessionmaker
 
-from db.models import Base, Notice
+from db.models import Base, Notice, NonWorkingDays, CalendarMonth
 from wt_client.schemas import NoticeSchema
+
+
+class CalendarNotReadyError(Exception):
+    pass
 
 
 class Database:
@@ -79,9 +83,10 @@ class Database:
         now = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         return now + timedelta(days=days)
 
-    def get_unsent_today_tomorrow(self) -> list[Notice]:
-        today = date.today()
-        days = [today.isoformat(), self.next_workday(today).isoformat()]
+    def get_unsent_today_tomorrow(self, today: date) -> list[Notice]:
+        next_day = self.get_next_working_day(today)
+        days = [today.isoformat(), next_day.isoformat()]
+
         with self._session_factory() as session:
             return list(
                 session.scalars(
@@ -104,15 +109,49 @@ class Database:
                     ).order_by(Notice.end_date.asc())
                 ).all()
             )
-    @staticmethod
-    def next_workday(d: date) -> date:
-        if d.weekday() == 4:
-            return d + timedelta(days=3)
-        if d.weekday() == 5:
-            return d + timedelta(days=2)
-        return d + timedelta(days=1)
-
+        
     def reset_ignored(self) -> None:
         with self._session_factory() as session:
             session.execute(update(Notice).where(Notice.sent == -1).values(sent=0))
+            session.commit()
+
+    def is_non_working_day(self, day: date) -> bool:
+        with self._session_factory() as session:
+            stmt = select(NonWorkingDays.id).where(
+                NonWorkingDays.date == day
+            )
+            return session.execute(stmt).scalar_one_or_none() is not None
+
+    def is_month_ready(self, month: int) -> bool:
+        with self._session_factory() as session:
+            stmt = select(CalendarMonth.id).where(
+                CalendarMonth.month == month,
+                CalendarMonth.is_ready == True
+            )
+            return session.execute(stmt).scalar_one_or_none() is not None
+
+    def get_next_working_day(self, day: date) -> date:
+        candidate = day + timedelta(days=1)
+        checked_month = None
+
+        while True:
+            month = int(str(day.year) + str(day.month))
+            if month != checked_month:
+                if not self.is_month_ready(month):
+                    raise CalendarNotReadyError(f"Календарь за {candidate.month:02d}.{candidate.year} не готов")
+            checked_month = month
+
+            if not self.is_non_working_day(candidate):
+                return candidate
+
+            candidate += timedelta(days=1)
+
+    def add_non_working_day(self,day: date,description: str | None = None,
+    ) -> None:
+        with self._session_factory() as session:
+            non_working_day = NonWorkingDays(
+                date=day,
+                description=description,
+            )
+            session.add(non_working_day)
             session.commit()

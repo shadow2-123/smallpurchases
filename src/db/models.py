@@ -1,9 +1,9 @@
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 
-from sqlalchemy import DateTime, Numeric, String, Text, Boolean, Integer
+from sqlalchemy import DateTime, Numeric, String, Text, Boolean, Integer, Date
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-
+from schwarz.column_alchemy import YearMonthIntColumn
 
 class Base(DeclarativeBase):
     pass
@@ -24,3 +24,17 @@ class Notice(Base):
     spec: Mapped[str] = mapped_column(Text)
     docs: Mapped[str] = mapped_column(Text)
     sent: Mapped[int] = mapped_column(Integer)
+
+class NonWorkingDays(Base):
+    __tablename__ = "non_working_days"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    date: Mapped[date] = mapped_column(Date, unique=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+class CalendarMonth(Base):
+    __tablename__ = "calendar_month"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    month: Mapped[int] = mapped_column(YearMonthIntColumn, unique=True)
+    is_ready: Mapped[bool] = mapped_column(Boolean)
