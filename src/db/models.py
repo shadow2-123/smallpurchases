@@ -3,7 +3,6 @@ from decimal import Decimal
 
 from sqlalchemy import DateTime, Numeric, String, Text, Boolean, Integer, Date
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from schwarz.column_alchemy import YearMonthIntColumn
 
 class Base(DeclarativeBase):
     pass
@@ -36,5 +35,5 @@ class CalendarMonth(Base):
     __tablename__ = "calendar_month"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    month: Mapped[int] = mapped_column(YearMonthIntColumn, unique=True)
+    month: Mapped[int] = mapped_column(Integer, unique=True)
     is_ready: Mapped[bool] = mapped_column(Boolean)

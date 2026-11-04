@@ -96,7 +96,7 @@ def main() -> None:
     db = Database(str(ROOT / settings["db_path"]))
     today = date.today()
 
-    if not db.is_month_ready(int(str(today.year) + str(today.month))):
+    if not db.is_month_ready(today.year * 100 + today.month):
         raise RuntimeError(
             f"Календарь за {today.month:02d}.{today.year} не готов"
         )
