@@ -2,6 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>18mz</title>
   <link rel="stylesheet" href="/static/styles.css">
 </head>
@@ -23,6 +24,36 @@
       <p class="hint">Одно слово или фраза на строку</p>
       <textarea id="words" spellcheck="false"></textarea>
       <p id="status" class="status"></p>
+    </section>
+    <section class="card calendar" id="calendar" aria-labelledby="calendar-title">
+      <div class="card-head"><h2 id="calendar-title">Календарь рассылки</h2><span id="calendar-ready" class="badge">Загрузка</span></div>
+      <p class="hint">Отметьте все нерабочие дни, включая субботы и воскресенья, затем подтвердите месяц. Рабочие субботы оставляйте без отметки.</p>
+      <div class="calendar-toolbar">
+        <button id="calendar-prev" type="button" aria-label="Предыдущий месяц">←</button>
+        <h3 id="calendar-month"></h3>
+        <button id="calendar-next" type="button" aria-label="Следующий месяц">→</button>
+        <button id="calendar-today" type="button" class="secondary">Текущий месяц</button>
+        <button id="calendar-refresh" type="button" class="secondary">Обновить</button>
+      </div>
+      <button id="calendar-weekends" type="button" class="secondary" disabled>Отметить субботы и воскресенья</button>
+      <p class="hint" style="margin-top: 10px">Для выбранного месяца. Рабочие субботы после заполнения снимите вручную.</p>
+      <div class="calendar-layout">
+        <div>
+          <div class="calendar-week" aria-hidden="true"><span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span></div>
+          <div id="calendar-days" class="calendar-days" aria-label="Дни месяца"></div>
+          <p class="hint calendar-legend">● Розовый — нерабочий · Контур — сегодня</p>
+        </div>
+        <form id="calendar-day-form" class="calendar-editor">
+          <h3 id="calendar-selected">Выберите день</h3>
+          <label class="calendar-check"><input id="calendar-off" type="checkbox" disabled> Нерабочий день</label>
+          <label for="calendar-description">Описание <span class="hint">(необязательно)</span></label>
+          <input id="calendar-description" type="text" placeholder="Например, праздник" disabled>
+          <button id="calendar-save-day" type="submit" disabled>Сохранить день</button>
+          <p class="hint">Изменение дня снимает готовность месяца.</p>
+        </form>
+      </div>
+      <div class="calendar-footer"><p id="calendar-summary" class="hint"></p><button id="calendar-confirm" type="button" disabled>Месяц готов</button></div>
+      <p id="calendar-status" class="status" role="status" aria-live="polite"></p>
     </section>
 
     <section class="grid">
